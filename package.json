@@ -1,0 +1,11 @@
+{
+  "name": "ecard-server",
+  "version": "0.0.1",
+  "description": "Server for ecard multiplayer",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pliexe",
+  "license": "ISC"
+}
