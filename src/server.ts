@@ -109,7 +109,6 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
     });
 });
 
-
 function runGame(players): void
 {
     console.log("starting game with: " + players.map(p => `${p.username}: ${p.id}`).join(" | "));
