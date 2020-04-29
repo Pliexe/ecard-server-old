@@ -4,6 +4,7 @@ import { SocketEvent } from './constants';
 import { User } from './Classes/user';
 import { quickMatch as QuickMatch } from './Matchmaking/quickMatch';
 import { lobbyMaker as LobbyMaker } from './Matchmaking/lobbyMaker';
+import { Game } from './Game/game';
 
 const quickMatch = new QuickMatch(runGame, (player) => { return player.id });
 const lobbyMaker = new LobbyMaker(runGame, (player) => { return player.id });
@@ -113,6 +114,10 @@ function runGame(players): void
 {
     console.log("starting game with: " + players.map(p => `${p.username}: ${p.id}`).join(" | "));
 
+    let game = new Game(players[0], players[1]);
+
     players[0].socket.emit('foundMatchTest');
     players[1].socket.emit('foundMatchTest');
+
+    game.startGame(Math.floor(Math.random()));
 }
