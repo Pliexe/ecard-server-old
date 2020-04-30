@@ -12,6 +12,7 @@ const io: SocketIO.Server = new SocketServer().socketHandler;
 
 let users: Map<string, User> = new Map();
 let sockets: Map<string, SocketIO.Socket> = new Map();
+let activeGames: Array<Game> = [];
 
 io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
 {
@@ -93,6 +94,11 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
 
     socket.on(SocketEvent.DISCONNECT, (reason: string) =>
     {
+        console.log("Reason: " + reason);
+        activeGames.forEach(game =>
+        {
+            game.playerDisconnect(user);
+        });
         // console.log("User was " + (quickMatch.inQueue(user) ? "in" : "out"));
         if (quickMatch.inQueue(user)) {
             quickMatch.leaveQueue(user);
@@ -107,6 +113,25 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
         // console.log(lobbyMaker.inRoom(user) + "in lobby");
         console.log("%s disconnected", user.username);
     });
+
+    socket.once('tryReconnect', async ({ playerID }, callback) =>
+    {
+        console.log("NEwID: " + user.id + ", oldid: " + playerID);
+
+        activeGames.forEach(game =>
+        {
+            let newUser = user;
+            newUser.id = playerID;
+
+            if (game.tryReconnect(newUser)) {
+                users.set(user.id, newUser);
+                user = newUser;
+                callback("sucess");
+            } else {
+                callback("failed");
+            }
+        });
+    });
 });
 
 function runGame(players): void
@@ -118,5 +143,11 @@ function runGame(players): void
     players[0].socket.emit('foundMatchTest');
     players[1].socket.emit('foundMatchTest');
 
-    game.startGame(Math.floor(Math.random()));
+    activeGames.push(game.startGame(Math.floor(Math.random()), endGame));
+}
+
+function endGame(gameid): void
+{
+    let index = activeGames.findIndex(game => game.gameID === gameid);
+    activeGames.splice(index);
 }
