@@ -1,4 +1,14 @@
-
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 const SocketIO_1 = require("./SocketIO");
 const constants_1 = require("./constants");
 const user_1 = require("./Classes/user");
@@ -71,6 +81,10 @@ io.on(constants_1.SocketEvent.CONNECT, (socket) => {
             yield others[0].socket.emit('leftRoom');
         lobbyMaker.leaveRoom(user, roomID);
     }));
+    socket.on('Disconnect_me', () => {
+        console.log("clicked disconnect");
+        socket.disconnect();
+    });
     socket.on(constants_1.SocketEvent.DISCONNECT, (reason) => {
         console.log("Reason: " + reason);
         activeGames.forEach(game => {
@@ -90,11 +104,11 @@ io.on(constants_1.SocketEvent.CONNECT, (socket) => {
         console.log("%s disconnected", user.username);
     });
     socket.once('tryReconnect', ({ playerID }, callback) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log("NEwID: " + user.id + ", oldid: " + playerID);
         activeGames.forEach(game => {
             let newUser = user;
             newUser.id = playerID;
             if (game.tryReconnect(newUser)) {
+                console.log("Reconnected");
                 users.set(user.id, newUser);
                 user = newUser;
                 callback("sucess");

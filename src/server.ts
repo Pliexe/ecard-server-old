@@ -92,6 +92,13 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
         lobbyMaker.leaveRoom(user, roomID);
     });
 
+    socket.on('Disconnect_me', () =>
+    {
+        console.log("clicked disconnect");
+        
+        socket.disconnect(); 
+    });
+
     socket.on(SocketEvent.DISCONNECT, (reason: string) =>
     {
         console.log("Reason: " + reason);
@@ -116,14 +123,14 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
 
     socket.once('tryReconnect', async ({ playerID }, callback) =>
     {
-        console.log("NEwID: " + user.id + ", oldid: " + playerID);
-
         activeGames.forEach(game =>
         {
             let newUser = user;
             newUser.id = playerID;
 
             if (game.tryReconnect(newUser)) {
+                console.log("Reconnected");
+                
                 users.set(user.id, newUser);
                 user = newUser;
                 callback("sucess");
