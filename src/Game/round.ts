@@ -53,6 +53,36 @@ export class Round
         this.player1Cards = Round.shuffle(defaultCards[<any>starting]);
         this.player2Cards = Round.shuffle(defaultCards[1 - <any>starting]);
 
+        this.RoundCardCollecting();
+
+        this.player1.socket.on("calculateOutcome", () =>
+        {
+            this.canContinueP1 = false;
+            this.canContinueP2 = false;
+
+            var outcome = Round.whoWins(this.player1LastPlacedCard, this.player2LastPlacedCard);
+
+            console.log("outcome");
+
+            if (outcome == 1) {
+              this.callback(1);
+              this.player1.socket.removeAllListeners("calculateOutcome");
+            } else if (outcome == -1) {
+              this.callback(0);
+              this.player1.socket.removeAllListeners("calculateOutcome");
+            } else {
+              this.player1.socket.emit('roundDraw', { yourCardIndex: this.player1LastPlacedCardIndex, enemyCardIndex: this.player2LastPlacedCardIndex });
+              this.player2.socket.emit('roundDraw', { yourCardIndex: this.player2LastPlacedCardIndex, enemyCardIndex: this.player1LastPlacedCardIndex });
+              this.canContinueP1 = false;
+              this.canContinueP2 = false;
+              this.RoundCardCollecting();
+            }
+        });
+
+        this.runRound();
+    }
+
+    private RoundCardCollecting(): void {
         this.player1.socket.once("canContinueRound", () =>
         {
             this.canContinueP1 = true;
@@ -79,31 +109,6 @@ export class Round
             this.player2LastPlacedCardIndex = index;
             this.player1.socket.emit("enemyPlaceCard", { id: parseInt(index), card: card });
         });
-
-        this.player1.socket.on("calculateOutcome", () =>
-        {
-            this.canContinueP1 = false;
-            this.canContinueP2 = false;
-
-            var outcome = Round.whoWins(this.player1LastPlacedCard, this.player2LastPlacedCard);
-
-            console.log("outcome");
-
-            if (outcome == 1) {
-              this.callback(1);
-              this.player1.socket.removeAllListeners("calculateOutcome");
-            } else if (outcome == -1) {
-              this.callback(0);
-              this.player1.socket.removeAllListeners("calculateOutcome");
-            } else {
-              this.player1.socket.emit('roundDraw', { yourCardIndex: this.player1LastPlacedCardIndex, enemyCardIndex: this.player2LastPlacedCardIndex });
-              this.player2.socket.emit('roundDraw', { yourCardIndex: this.player2LastPlacedCardIndex, enemyCardIndex: this.player1LastPlacedCardIndex });
-              this.canContinueP1 = false;
-              this.canContinueP2 = false;
-            }
-        });
-
-        this.runRound();
     }
 
     private runRound(): void
