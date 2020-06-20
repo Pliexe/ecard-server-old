@@ -6,6 +6,7 @@ class User {
         this.username = "Anymonious";
         this.id = shortid.generate();
         this.socket = socket;
+        this.userid = 0;
     }
 }
 exports.User = User;

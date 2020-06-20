@@ -5,13 +5,14 @@ var defaultCards = [
     ["citizen", "citizen", "citizen", "citizen", "slave"]
 ];
 class Round {
-    constructor(player1, player2, starting, callback) {
+    constructor(player1, player2, starting, callback, g) {
         this.player1LastPlacedCard = "";
         this.player2LastPlacedCard = "";
         this.player1 = player1;
         this.player2 = player2;
         this.callback = callback;
         this.setup(starting);
+        this.game = g;
     }
     static whoWins(player1card, player2card) {
         switch (player1card) {
@@ -35,11 +36,11 @@ class Round {
             var outcome = Round.whoWins(this.player1LastPlacedCard, this.player2LastPlacedCard);
             console.log("outcome");
             if (outcome == 1) {
-                this.callback(1);
+                this.callback(1, this.game);
                 this.player1.socket.removeAllListeners("calculateOutcome");
             }
             else if (outcome == -1) {
-                this.callback(0);
+                this.callback(0, this.game);
                 this.player1.socket.removeAllListeners("calculateOutcome");
             }
             else {
@@ -67,7 +68,7 @@ class Round {
             this.player2.socket.emit("enemyPlaceCard", { id: parseInt(index), card: card });
         });
         this.player2.socket.once('placeCard', ({ card, index }) => {
-            console.log(`recived: card: ${card}, at: ${index}`);
+            // console.log(`recived: card: ${card}, at: ${index}`);
             if (!this.canContinueP1 && !this.canContinueP2)
                 return;
             this.player2LastPlacedCard = card;
@@ -78,8 +79,8 @@ class Round {
     runRound() {
         this.player1.socket.emit('startRound', { yourCards: this.player1Cards.join(','), enemyCards: this.player2Cards.join(',') });
         this.player2.socket.emit('startRound', { yourCards: this.player2Cards.join(','), enemyCards: this.player1Cards.join(',') });
-        console.log(this.player1Cards);
-        console.log(this.player2Cards);
+        // console.log(this.player1Cards);
+        // console.log(this.player2Cards);
     }
     static shuffle(a) {
         var j, x, i;

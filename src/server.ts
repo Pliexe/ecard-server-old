@@ -4,7 +4,11 @@ import { SocketEvent } from './constants';
 import { User } from './Classes/user';
 import { quickMatch as QuickMatch } from './Matchmaking/quickMatch';
 import { lobbyMaker as LobbyMaker } from './Matchmaking/lobbyMaker';
-import { Game } from './Game/game';
+import { Game, IResults } from './Game/game';
+import { connect } from 'mongoose';
+import { MatchHistory } from './Handlers/MatchHistory';
+
+// HERE ARE THE VALUES: accountLogout, getHistory
 
 const quickMatch = new QuickMatch(runGame, (player) => { return player.id });
 const lobbyMaker = new LobbyMaker(runGame, (player) => { return player.id });
@@ -14,6 +18,17 @@ let users: Map<string, User> = new Map();
 let sockets: Map<string, SocketIO.Socket> = new Map();
 let activeGames: Array<Game> = [];
 
+connect(process.env.MONGOURL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true
+});
+
+// IMPORTANT current game version
+
+let currentGameVersion = "0.0.1";
+
 io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
 {
     console.log("User connected");
@@ -22,11 +37,39 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) =>
     users.set(user.id, user);
     sockets.set(user.id, socket);
 
-    socket.on("updateUsername", ({ username }) =>
+    let verVerifyWait = setTimeout(() => {
+        socket.disconnect();
+        console.log("socket disconected")
+    }, 5000);
+
+    socket.on('checkVersion', async ({version}) => {
+        clearTimeout(verVerifyWait);
+        if(version !== currentGameVersion)
+        {
+            await socket.emit("wrongVersion");
+            socket.disconnect();
+        }
+    });
+
+    socket.on("updateUsername", ({ username, userid }) =>
     {
         user.username = username;
+        user.userid = userid;
         users.set(user.id, user);
         console.log("Updated username to %s", username);
+    });
+
+    socket.on("accountLogout", () => {
+        user.username = "Anymonious";
+        user.userid = 0;
+        users.set(user.id, user);
+        console.log("Reset this users info");
+    });
+
+    socket.on("getHistory", async (callback) => {
+        if(user.userid === 0) return;
+        let his = await new MatchHistory(user.userid).getHistory;
+        callback(his);
     });
 
     socket.on("getId", (callback) =>
@@ -153,8 +196,13 @@ function runGame(players): void
     activeGames.push(game.startGame(Math.floor(Math.random()), endGame));
 }
 
-function endGame(gameid): void
+async function endGame(gameid, { winer, loser, draw, disc, winerScore, loserScore }: IResults): Promise<void>
 {
-    let index = activeGames.findIndex(game => game.gameID === gameid);
+    let index = await activeGames.findIndex(game => game.gameID === gameid);
+    if(!disc)
+    {
+        if(winer.userid !== 0) await new MatchHistory(winer.userid).saveMatch(winerScore, loserScore, loser.username, false);
+        if(loser.userid !== 0) await new MatchHistory(loser.userid).saveMatch(loserScore, winerScore, winer.username, false);
+    }
     activeGames.splice(index);
 }

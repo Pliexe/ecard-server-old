@@ -15,22 +15,57 @@ const user_1 = require("./Classes/user");
 const quickMatch_1 = require("./Matchmaking/quickMatch");
 const lobbyMaker_1 = require("./Matchmaking/lobbyMaker");
 const game_1 = require("./Game/game");
+const mongoose_1 = require("mongoose");
+const MatchHistory_1 = require("./Handlers/MatchHistory");
+// HERE ARE THE VALUES: accountLogout, getHistory
 const quickMatch = new quickMatch_1.quickMatch(runGame, (player) => { return player.id; });
 const lobbyMaker = new lobbyMaker_1.lobbyMaker(runGame, (player) => { return player.id; });
 const io = new SocketIO_1.SocketServer().socketHandler;
 let users = new Map();
 let sockets = new Map();
 let activeGames = [];
+mongoose_1.connect(process.env.MONGOURL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true
+});
+// IMPORTANT current game version
+let currentGameVersion = "0.0.1";
 io.on(constants_1.SocketEvent.CONNECT, (socket) => {
     console.log("User connected");
     let user = new user_1.User(socket);
     users.set(user.id, user);
     sockets.set(user.id, socket);
-    socket.on("updateUsername", ({ username }) => {
+    let verVerifyWait = setTimeout(() => {
+        socket.disconnect();
+        console.log("socket disconected");
+    }, 5000);
+    socket.on('checkVersion', ({ version }) => __awaiter(void 0, void 0, void 0, function* () {
+        clearTimeout(verVerifyWait);
+        if (version !== currentGameVersion) {
+            yield socket.emit("wrongVersion");
+            socket.disconnect();
+        }
+    }));
+    socket.on("updateUsername", ({ username, userid }) => {
         user.username = username;
+        user.userid = userid;
         users.set(user.id, user);
         console.log("Updated username to %s", username);
     });
+    socket.on("accountLogout", () => {
+        user.username = "Anymonious";
+        user.userid = 0;
+        users.set(user.id, user);
+        console.log("Reset this users info");
+    });
+    socket.on("getHistory", (callback) => __awaiter(void 0, void 0, void 0, function* () {
+        if (user.userid === 0)
+            return;
+        let his = yield new MatchHistory_1.MatchHistory(user.userid).getHistory;
+        callback(his);
+    }));
     socket.on("getId", (callback) => {
         callback(user.id);
     });
@@ -126,8 +161,16 @@ function runGame(players) {
     players[1].socket.emit('foundMatchTest');
     activeGames.push(game.startGame(Math.floor(Math.random()), endGame));
 }
-function endGame(gameid) {
-    let index = activeGames.findIndex(game => game.gameID === gameid);
-    activeGames.splice(index);
+function endGame(gameid, { winer, loser, draw, disc, winerScore, loserScore }) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let index = yield activeGames.findIndex(game => game.gameID === gameid);
+        if (!disc) {
+            if (winer.userid !== 0)
+                yield new MatchHistory_1.MatchHistory(winer.userid).saveMatch(winerScore, loserScore, loser.username, false);
+            if (loser.userid !== 0)
+                yield new MatchHistory_1.MatchHistory(loser.userid).saveMatch(loserScore, winerScore, winer.username, false);
+        }
+        activeGames.splice(index);
+    });
 }
 //# sourceMappingURL=server.js.map
