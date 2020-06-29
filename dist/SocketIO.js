@@ -1,11 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_1 = require("http");
-const io = require("socket.io");
+const socket_io_1 = __importDefault(require("socket.io"));
 class SocketServer {
     constructor() {
         this.httpConnection = http_1.createServer();
-        this.socketHandler = io(this.httpConnection);
+        this.socketHandler = socket_io_1.default(this.httpConnection);
         this.listen();
     }
     listen() {

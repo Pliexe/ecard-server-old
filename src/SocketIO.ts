@@ -1,5 +1,5 @@
 import { createServer, Server } from 'http';
-import * as io from 'socket.io';
+import io from 'socket.io';
 
 export class SocketServer
 {
