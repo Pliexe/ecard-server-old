@@ -14,6 +14,7 @@
     "eslint": "^6.8.0",
     "express": "^4.17.1",
     "game-jolt-api": "^1.0.3",
+    "http": "0.0.1-security",
     "matchmaking": "^0.4.32",
     "mongoose": "^5.9.19",
     "shortid": "^2.2.15",
