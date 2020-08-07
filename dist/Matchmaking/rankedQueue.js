@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.rankedMatch = void 0;
 class rankedMatch {
     constructor(resolver, getKey, options) {
         this.push = (player) => {

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.quickMatch = void 0;
 class quickMatch {
     constructor(resolver, getKey, options) {
         this.push = (player) => {

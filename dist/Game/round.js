@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Round = void 0;
 var defaultCards = [
     ["citizen", "citizen", "citizen", "citizen", "emperor"],
     ["citizen", "citizen", "citizen", "citizen", "slave"]

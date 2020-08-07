@@ -2,11 +2,16 @@ import { SocketServer } from "./SocketIO";
 import { SocketEvent } from "./constants";
 import gamejoltAPI from 'game-jolt-api';
 import { User } from "./Classes/user";
+import socketClient from 'socket.io-client';
+import { quickMatch as QuickMatch } from './Matchmaking/quickMatch';
 
 interface ILoginResponse {
     success: boolean;
     message: string;
 }
+
+const quickMatch = new QuickMatch(runGame, (player) => { return player.id });
+// const lobbyMaker = new LobbyMaker(runGame, (player) => { return player.id });
 
 let gamejoltAPItools = gamejoltAPI('ebbfbf2e43afbfc57b3957114806612b', 450666);
 
@@ -25,11 +30,134 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) => {
             user.username = username;
             user.token = token;
             user.logedIn = true;
-            
+
             socket.emit('loginResult', res);
         });
     });
+
+    socket.on('GameStatus', (callback: (result: string) => void) => {
+        if (game_server.connected) {
+            return callback("avaible");
+        } else return callback("offline");
+    });
+
+    socket.on('joinQueue', (type) => {
+        if(!game_server.connected) socket.emit('queueError', 'Game server offline');
+        console.log(type);
+        switch (type) {
+            case "normal":
+                if (quickMatch.inQueue(user)) {
+                    socket.emit('forceLeave');
+                    quickMatch.leaveQueue(user);
+                }
+                quickMatch.push(user);
+                break;
+            default:
+                socket.emit('queueError', "Unknown queue type");
+                break;
+        }
+    });
+
+    socket.on('leaveQueue', (type: string, callback: (result) => void) => {
+        console.log(type);
+        switch (type) {
+            case "normal":
+                if (quickMatch.inQueue(user)) {
+                    quickMatch.leaveQueue(user);
+                    if (quickMatch.inQueue(user)) callback(false);
+                    else
+                        callback(true);
+                }
+                else
+                    callback(true);
+                break;
+            default:
+                callback(false);
+                break;
+        }
+    });
+
+    socket.on("disconnect", (reason) => {
+        console.log(`${user.username} disconnected`);
+        if (quickMatch.inQueue(user)) quickMatch.leaveQueue(user);
+        if (users.has(user.id)) users.delete(user.id);
+    });
 });
+
+const game_server = socketClient("http://localhost:3001", {
+    reconnection: true
+});
+
+game_server.on("connect", () => {
+    game_server.emit("auth", ({ type: "server", auth: process.env.GAME_SERVER_AUTH }));
+});
+
+game_server.on("authResult", (data: { result: boolean, reason: string }) => {
+    io.sockets.emit("gameStatusUpdate", data.result, data.result);
+});
+
+game_server.on('disconnect', () => {
+    io.sockets.emit("gameStatusUpdate", false, "disconnected");
+});
+
+function runGame(players: User[]) {
+    console.log(game_server.connected);
+    console.log("Game tries to start");
+    if (!game_server.connected) {
+        players[0].socket.emit('queueError', 'Game server is offline');
+        players[1].socket.emit('queueError', 'Game server is offline');
+        return;
+    }
+    game_server.emit('queueGame', players[0].id, players[1].id, (result: boolean) => {
+        if (result) {
+            console.log('game start');
+            players[0].socket.emit('gameStart', players[0].id);
+            players[1].socket.emit('gameStart', players[1].id);
+        } else {
+            players[0].socket.emit('queueError', 'Game failed to start');
+            players[1].socket.emit('queueError', 'Game failed to start');
+        }
+    });
+
+    game_server.on('gameResult', (p1id, p2id, info: { time: number, p1s: number, p2s: number, winer: string }) => {
+        switch (info.winer) {
+            case "p1":
+                if (users.has(p1id))
+                    if (users.get(p1id).socket.connected)
+                        users.get(p1id).socket.emit('matchResult', "win", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                if (users.has(p2id))
+                    if (users.get(p2id).socket.connected)
+                        users.get(p2id).socket.emit('matchResult', "lose", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                break;
+            case "p2":
+                if (users.has(p1id))
+                    if (users.get(p1id).socket.connected)
+                        users.get(p1id).socket.emit('matchResult', "lose", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                if (users.has(p2id))
+                    if (users.get(p2id).socket.connected)
+                        users.get(p2id).socket.emit('matchResult', "win", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                break;
+            case "draw":
+                if (users.has(p1id))
+                    if (users.get(p1id).socket.connected)
+                        users.get(p1id).socket.emit('matchResult', "draw", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                if (users.has(p2id))
+                    if (users.get(p2id).socket.connected)
+                        users.get(p2id).socket.emit('matchResult', "draw", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                break;
+        }
+    });
+
+    game_server.on('loadFail', (p1id, p2id) => {
+        console.log("OPP LOAD FAIL");
+        if (users.has(p1id))
+            if (users.get(p1id).socket.connected)
+                users.get(p1id).socket.emit('oppDiscAtLoad');
+        if (users.has(p2id))
+            if (users.get(p2id).socket.connected)
+                users.get(p2id).socket.emit('oppDiscAtLoad');
+    });
+}
 
 // import { SocketServer } from './SocketIO';
 // import * as SocketIO from 'socket.io';
@@ -171,7 +299,7 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) => {
 //     socket.on('Disconnect_me', () =>
 //     {
 //         console.log("clicked disconnect");
-        
+
 //         socket.disconnect(); 
 //     });
 
@@ -206,7 +334,7 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) => {
 
 //             if (game.tryReconnect(newUser)) {
 //                 console.log("Reconnected");
-                
+
 //                 users.set(user.id, newUser);
 //                 user = newUser;
 //                 callback("sucess");
