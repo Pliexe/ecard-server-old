@@ -119,31 +119,31 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
         }
     });
 
-    game_server.on('gameResult', (p1id, p2id, info: { time: number, p1s: number, p2s: number, winer: string }) => {
+    game_server.on('gameResult', (p1id, p2id, info: { time: number, p1s: number, p2s: number, winer: string, type: string }) => {
         switch (info.winer) {
             case "p1":
                 if (users.has(p1id))
                     if (users.get(p1id).socket.connected)
-                        users.get(p1id).socket.emit('matchResult', "win", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p1id).socket.emit('matchResult', "win", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "lose", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "lose", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 break;
             case "p2":
                 if (users.has(p1id))
                     if (users.get(p1id).socket.connected)
-                        users.get(p1id).socket.emit('matchResult', "lose", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p1id).socket.emit('matchResult', "lose", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "win", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "win", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 break;
             case "draw":
                 if (users.has(p1id))
                     if (users.get(p1id).socket.connected)
-                        users.get(p1id).socket.emit('matchResult', "draw", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p1id).socket.emit('matchResult', "draw", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "draw", { p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "draw", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 break;
         }
     });
