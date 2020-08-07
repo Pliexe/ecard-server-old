@@ -13,7 +13,7 @@ interface ILoginResponse {
 const quickMatch = new QuickMatch(runGame, (player) => { return player.id });
 // const lobbyMaker = new LobbyMaker(runGame, (player) => { return player.id });
 
-let gamejoltAPItools = gamejoltAPI('ebbfbf2e43afbfc57b3957114806612b', 450666);
+let gamejoltAPItools = gamejoltAPI(process.env.GAMEJOLT_GAME_API, 450666);
 
 const io: SocketIO.Server = new SocketServer().socketHandler;
 
@@ -84,7 +84,7 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) => {
     });
 });
 
-const game_server = socketClient("http://localhost:3001", {
+const game_server = socketClient("https://ecard-game-server.pliexe.repl.co", {
     reconnection: true
 });
 
