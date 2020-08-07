@@ -127,7 +127,7 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
                         users.get(p1id).socket.emit('matchResult', "win", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "lose", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "lose", {type: type, p1s: info.p2s, p2s: info.p1s, time: info.time });
                 break;
             case "p2":
                 if (users.has(p1id))
@@ -135,7 +135,7 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
                         users.get(p1id).socket.emit('matchResult', "lose", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "win", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "win", {type: type, p1s: info.p2s, p2s: info.p1s, time: info.time });
                 break;
             case "draw":
                 if (users.has(p1id))
@@ -143,7 +143,7 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
                         users.get(p1id).socket.emit('matchResult', "draw", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
                 if (users.has(p2id))
                     if (users.get(p2id).socket.connected)
-                        users.get(p2id).socket.emit('matchResult', "draw", {type: type, p1s: info.p1s, p2s: info.p2s, time: info.time });
+                        users.get(p2id).socket.emit('matchResult', "draw", {type: type, p1s: info.p2s, p2s: info.p1s, time: info.time });
                 break;
         }
     });
