@@ -8,11 +8,11 @@ export class quickMatch<P>
 {
     private getKey: (player: P) => string;
     private queue: P[];
-    private resolver: (players: P[]) => void;
+    private resolver: (players: P[], type: string) => void;
     private matchSize: number;
     private checkInterval: number;
 
-    constructor(resolver: (players: P[]) => void, getKey: (player) => string, options?: quickMatchOptions)
+    constructor(resolver: (players: P[], type: string) => void, getKey: (player) => string, options?: quickMatchOptions)
     {
         this.queue = [];
         this.getKey = getKey;
@@ -29,7 +29,7 @@ export class quickMatch<P>
                 while (this.queue.length > 0 && players.length < this.matchSize) {
                     players.push(this.queue.pop() as P);
                 }
-                this.resolver(players);
+                this.resolver(players, "normal");
             }
         }, this.checkInterval);
     }

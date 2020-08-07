@@ -100,7 +100,7 @@ game_server.on('disconnect', () => {
     io.sockets.emit("gameStatusUpdate", false, "disconnected");
 });
 
-function runGame(players: User[]) {
+function runGame(players: User[], type: "normal" | "ranked" | "custom") {
     console.log(game_server.connected);
     console.log("Game tries to start");
     if (!game_server.connected) {
@@ -108,7 +108,7 @@ function runGame(players: User[]) {
         players[1].socket.emit('queueError', 'Game server is offline');
         return;
     }
-    game_server.emit('queueGame', players[0].id, players[1].id, (result: boolean) => {
+    game_server.emit('queueGame', players[0].id, players[1].id, type, (result: boolean) => {
         if (result) {
             console.log('game start');
             players[0].socket.emit('gameStart', players[0].id);
