@@ -4,20 +4,6 @@ import gamejoltAPI from 'game-jolt-api';
 import { User } from "./Classes/user";
 import socketClient from 'socket.io-client';
 import { quickMatch as QuickMatch } from './Matchmaking/quickMatch';
-import http from 'http';
-import express from 'express';
-
-const app = express();
-
-app.use(express.static('public'));
-
-const listener = app.listen(process.env.PORT, function() {
-  console.log('Your app is listening on port ' + process.env.PORT);
-});
-
-app.get('/', function(request, response) {
-  response.send("What are you doing here?")
-});
 
 interface ILoginResponse {
     success: boolean;
@@ -29,7 +15,15 @@ const quickMatch = new QuickMatch(runGame, (player) => { return player.id });
 
 let gamejoltAPItools = gamejoltAPI(process.env.GAMEJOLT_GAME_API, 450666);
 
-const io: SocketIO.Server = new SocketServer().socketHandler;
+const socketServer = new SocketServer();
+const app = socketServer.app;
+const io: SocketIO.Server = socketServer.socketHandler;
+
+// app.use(express.static('public'));
+
+app.get('/', function(request, response) {
+  response.send("What are you doing here? The website is not made yet, this is only to have it go 24/7");
+});
 
 let users: Map<string, User> = new Map();
 
