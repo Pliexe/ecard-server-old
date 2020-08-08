@@ -119,8 +119,8 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
     game_server.emit('queueGame', players[0].id, players[1].id, type, (result: boolean) => {
         if (result) {
             console.log('game start');
-            players[0].socket.emit('gameStart', players[0].id);
-            players[1].socket.emit('gameStart', players[1].id);
+            players[0].socket.emit('gameStart', players[0].id, players[1].username);
+            players[1].socket.emit('gameStart', players[1].id, players[0].username);
         } else {
             players[0].socket.emit('queueError', 'Game failed to start');
             players[1].socket.emit('queueError', 'Game failed to start');
