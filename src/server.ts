@@ -92,7 +92,7 @@ io.on(SocketEvent.CONNECT, (socket: SocketIO.Socket) => {
     });
 });
 
-const game_server = socketClient("https://ecard-game-server.pliexe.repl.co", {
+const game_server = socketClient(process.env.GAME_SERVER_URL, {
     reconnection: true
 });
 
