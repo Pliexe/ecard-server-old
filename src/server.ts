@@ -128,6 +128,15 @@ function runGame(players: User[], type: "normal" | "ranked" | "custom") {
     });
 
     game_server.on('gameResult', (p1id, p2id, info: { time: number, p1s: number, p2s: number, winer: string, type: string }) => {
+
+        console.log("GAME RESULTS: ");
+        console.log(users.has(p1id));
+        console.log(users.has(p2id));
+        console.log("\n CONENCTED? =>>>>");
+        console.log(users.get(p1id).socket.connected);
+        console.log(users.get(p2id).socket.connected);
+        console.log("END >> \n");
+
         switch (info.winer) {
             case "p1":
                 if (users.has(p1id))
